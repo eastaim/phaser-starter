@@ -10,6 +10,12 @@ export const GameEvents = {
   next: 'next',
 } as const;
 
+/** Events UIScene emits back at this scene. */
+export const UiEvents = {
+  /** `true` while a DOM overlay is open, so a tap on it is not also a drop. */
+  inputLock: 'ui:input-lock',
+} as const;
+
 /**
  * Physics, input and rendering. Every rule decision comes from `game/rules`;
  * this scene only reports facts to it and applies the result.
@@ -24,6 +30,8 @@ export class GameScene extends Phaser.Scene {
   private held?: Phaser.GameObjects.Image;
   private score = 0;
   private canDrop = false;
+  /** Set while an overlay owns the pointer; independent of the drop cooldown. */
+  private inputLocked = false;
   private aimX = LAYOUT.width / 2;
 
   constructor() {
@@ -34,6 +42,9 @@ export class GameScene extends Phaser.Scene {
     this.balls = [];
     this.score = 0;
     this.canDrop = true;
+    this.inputLocked = false;
+
+    this.events.on(UiEvents.inputLock, (locked: boolean) => (this.inputLocked = locked));
 
     this.buildPlayfield();
 
@@ -94,7 +105,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drop(): void {
-    if (!this.canDrop) return;
+    if (!this.canDrop || this.inputLocked) return;
     this.canDrop = false;
 
     this.spawnBall(this.aimX, LAYOUT.dropY, this.heldKind);

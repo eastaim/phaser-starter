@@ -6,6 +6,7 @@ import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { LocalScoreService } from './services/LocalScoreService';
 import type { ScoreService } from './services/ScoreService';
+import { ensurePlayer } from './ui/nameGate';
 import './style.css';
 
 // CHANGE THIS when scaffolding a new game from the template.
@@ -19,6 +20,10 @@ const GAME_ID = 'phaser-starter';
 // The one place the app decides where scores live. Swapping in a server-backed
 // implementation later is a change to this line and nothing else.
 const scoreService: ScoreService = new LocalScoreService(GAME_ID);
+
+// Who is playing. A returning browser is recognised by its cookie; a first
+// visit is asked for a name before the game boots, because the HUD shows it.
+const player = await ensurePlayer();
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -40,7 +45,10 @@ const game = new Phaser.Game({
   scene: [BootScene, GameScene, UIScene],
   callbacks: {
     // preBoot runs before any scene is created, so scenes can rely on this.
-    preBoot: (game) => game.registry.set('scoreService', scoreService),
+    preBoot: (game) => {
+      game.registry.set('scoreService', scoreService);
+      game.registry.set('player', player);
+    },
   },
 });
 

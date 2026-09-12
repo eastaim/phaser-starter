@@ -42,6 +42,11 @@ that is the one change that makes the whole thing untestable.
 - `src/services/ScoreService.ts` — the persistence boundary. The game never calls `localStorage`
   or `fetch` directly. Adding a leaderboard later means one new implementation plus the single
   injection line in `main.ts`.
+- `src/services/player.ts` — anonymous identity: a name and a uuid in a cookie, no account. The
+  cookie is origin-wide (`path=/`), so identity is _shared_ by every game while scores stay per
+  game. Mirrored to localStorage because Safari caps script-written cookies at 7 days.
+- `src/ui/nameGate.ts` — the first-visit name prompt. Plain DOM over the canvas, and the game does
+  not boot until it resolves.
 - `src/main.ts` — `GAME_ID` names this game's saved data and **must be changed when scaffolding a
   new game** (see below).
 
@@ -84,8 +89,44 @@ These cost real debugging time. Do not reintroduce them.
 - **Every game on `eastaim.github.io` shares one localStorage.** Never hardcode a storage key;
   derive it from `GAME_ID` so keys stay per-game (see _Scaffolding a new game_ above). A shared key
   looks fine until a second game is deployed, then both games' scores start overwriting each other.
+- **An id rule with `display` defeats the `hidden` attribute.** `#welcome { display: flex }` beats
+  the UA stylesheet's `[hidden] { display: none }`, so the name overlay stayed on screen after it
+  was dismissed — the game was running, invisible, behind it. Any element toggled with `hidden`
+  needs its own `#id[hidden] { display: none }`.
 - **Do not hardcode `base` in `vite.config.ts`.** It is derived from `GITHUB_REPOSITORY` so a repo
   created from this template works under any name. Hardcoding it 404s every asset on deploy.
+
+## Players
+
+There is no login. The first visit asks for a name, stores `{id, name}` in the `player` cookie, and
+every later visit is recognised by it. `main.ts` awaits `ensurePlayer()` before creating the game
+and puts the result in the registry, so any scene can read `registry.get('player')`.
+
+`ScoreService.submit(score, player)` takes the player rather than reading storage itself — a
+server-backed implementation needs the id and name in its request body, and keeping the read out of
+the service preserves the rule that `main.ts` is the only injection site.
+
+Storage layout, and why it is split:
+
+| Key                                     | Scope        | Value                                                    |
+| --------------------------------------- | ------------ | -------------------------------------------------------- |
+| `player` (cookie + localStorage mirror) | whole origin | `{"id":"<uuid>","name":"…"}`                             |
+| `<GAME_ID>.best`                        | one game     | a bare number — **the portal parses it with `Number()`** |
+| `<GAME_ID>.best.owner`                  | one game     | the name that set it                                     |
+
+Never put the name inside `<GAME_ID>.best`. The games portal reads that key directly, and a JSON
+value there breaks its score display with no error on either side.
+
+Tapping the name in the HUD reopens the same overlay in rename mode. `savePlayer()` keeps the id, so
+the record stays theirs, and `ScoreService.renameOwner()` refreshes the stored attribution — but
+only when the ids match, so a best score left by someone else on a shared browser keeps its name.
+
+The overlay is DOM on top of a running game, which is why `UiEvents.inputLock` exists: GameScene
+drops a ball on `pointerup`, so the HUD opens the dialog on `pointerdown` and locks dropping first.
+Without that, opening the dialog also drops a ball.
+
+This is identity, **not authentication**: both fields are editable in devtools. A future server must
+not trust them for anything that matters.
 
 ## Testing a game without a visible browser
 
