@@ -55,7 +55,7 @@ that is the one change that makes the whole thing untestable.
 `main.ts` injects `GAME_ID` into `LocalScoreService`, which stores the personal best under
 `<GAME_ID>.best`. Set it to the new repository's name, lowercased.
 
-Every game deploys to the same GitHub Pages origin (`https://eastaim.github.io`), so they all share
+Every game deploys to the same GitHub Pages origin (`https://y3games.github.io`), so they all share
 **one** localStorage. A key hardcoded in the template — as `game.best` once was — means two
 template-derived games silently overwrite each other's high score, and nothing about the symptom
 points at storage. Deriving the key from the id makes the collision impossible.
@@ -86,7 +86,7 @@ These cost real debugging time. Do not reintroduce them.
   a positional one (e.g. "has crossed below a line"). A positional gate can silently never open.
 - `Rectangle.setStrokeStyle(width, color, alpha)` takes alpha as a third argument. Packing it into
   the colour (`0xffffff22`) renders a wrong hue with no error.
-- **Every game on `eastaim.github.io` shares one localStorage.** Never hardcode a storage key;
+- **Every game on `y3games.github.io` shares one localStorage.** Never hardcode a storage key;
   derive it from `GAME_ID` so keys stay per-game (see _Scaffolding a new game_ above). A shared key
   looks fine until a second game is deployed, then both games' scores start overwriting each other.
 - **An id rule with `display` defeats the `hidden` attribute.** `#welcome { display: flex }` beats
