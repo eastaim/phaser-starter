@@ -8,9 +8,17 @@ import { LocalScoreService } from './services/LocalScoreService';
 import type { ScoreService } from './services/ScoreService';
 import './style.css';
 
+// CHANGE THIS when scaffolding a new game from the template.
+//
+// Games deployed to the same GitHub Pages origin share one localStorage, so the
+// id is what keeps their saved data apart: the personal best lives under
+// `<GAME_ID>.best`. Keep it equal to the repository name (lowercased) — that is
+// also the id the games portal looks the score up by.
+const GAME_ID = 'phaser-starter';
+
 // The one place the app decides where scores live. Swapping in a server-backed
 // implementation later is a change to this line and nothing else.
-const scoreService: ScoreService = new LocalScoreService();
+const scoreService: ScoreService = new LocalScoreService(GAME_ID);
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
