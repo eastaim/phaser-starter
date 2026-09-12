@@ -20,4 +20,4 @@
 
 ## 참고한 프로젝트
 
-- [eastaim/MergeDrop](https://github.com/eastaim/MergeDrop) — 이 템플릿이 추출된 원본
+- [y3games/MergeDrop](https://github.com/y3games/MergeDrop) — 이 템플릿이 추출된 원본

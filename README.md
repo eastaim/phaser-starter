@@ -5,7 +5,7 @@ Phaser 3 웹 게임 템플릿. GitHub Pages 자동 배포까지 연결된 상태
 ## 새 게임 시작하기
 
 ```bash
-gh repo create MyGame --template eastaim/phaser-starter --public --clone
+gh repo create MyGame --template y3games/phaser-starter --public --clone
 cd MyGame
 npm install
 npm run dev
@@ -21,7 +21,7 @@ const GAME_ID = 'phaser-starter'; // ← 새 저장소 이름(소문자 슬러�
 ```
 
 최고 점수는 `<GAME_ID>.best` 키로 localStorage에 저장됩니다. 모든 게임이
-`https://eastaim.github.io` 한 오리진 아래 배포되므로 localStorage를 공유합니다. 이걸 그대로
+`https://y3games.github.io` 한 오리진 아래 배포되므로 localStorage를 공유합니다. 이걸 그대로
 두면 템플릿에서 만든 게임끼리 서로의 최고 점수를 덮어씁니다. 게임 포털도 같은 `<id>.best`
 규약으로 점수를 읽으므로, 포털 카탈로그의 `id`와 같은 값을 쓰세요.
 
