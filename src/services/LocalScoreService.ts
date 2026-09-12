@@ -1,4 +1,11 @@
+import type { Player } from './player';
 import type { LeaderboardEntry, ScoreService } from './ScoreService';
+
+/** Who set the stored best. The id is what makes a rename resolvable. */
+interface OwnerRecord {
+  readonly id: string;
+  readonly name: string;
+}
 
 /** A game id is a slug: lowercase letters, digits and hyphens. */
 const GAME_ID_PATTERN = /^[a-z0-9-]+$/;
@@ -10,7 +17,8 @@ const GAME_ID_PATTERN = /^[a-z0-9-]+$/;
  * deployed to the same GitHub Pages origin shares one localStorage, so a key
  * baked into the template would make two template-derived games silently
  * overwrite each other's best score. `<gameId>.best` is also the convention the
- * games portal reads.
+ * games portal reads, so that key holds a bare number and nothing else — who
+ * scored it lives in a sibling `<gameId>.best.owner` key.
  *
  * Every storage access is guarded — private browsing, disabled site data, and
  * embedded contexts can all make localStorage throw rather than return null.
@@ -18,6 +26,7 @@ const GAME_ID_PATTERN = /^[a-z0-9-]+$/;
  */
 export class LocalScoreService implements ScoreService {
   private readonly bestKey: string;
+  private readonly ownerKey: string;
 
   /**
    * @param gameId Stable slug for this game, matching the repository name and
@@ -32,6 +41,7 @@ export class LocalScoreService implements ScoreService {
       );
     }
     this.bestKey = `${gameId}.best`;
+    this.ownerKey = `${gameId}.best.owner`;
   }
 
   async getBest(): Promise<number> {
@@ -44,18 +54,52 @@ export class LocalScoreService implements ScoreService {
     }
   }
 
-  async submit(score: number): Promise<boolean> {
+  async submit(score: number, player: Player): Promise<boolean> {
     const best = await this.getBest();
     if (score <= best) return false;
     try {
       localStorage.setItem(this.bestKey, String(score));
+      this.writeOwner(player);
     } catch {
       // Storage unavailable — the run still counted for this session.
     }
     return true;
   }
 
+  async renameOwner(player: Player): Promise<void> {
+    // Only the record this player set. A best score left by someone else on a
+    // shared browser keeps the name it was earned under.
+    if (this.readOwner()?.id !== player.id) return;
+    this.writeOwner(player);
+  }
+
+  /**
+   * One entry at most: this browser's own best, under the name that set it.
+   * There is no server, so there is nobody else to rank against — but the shape
+   * matches what a real leaderboard returns, so the UI needs no special case.
+   */
   async getLeaderboard(): Promise<readonly LeaderboardEntry[]> {
-    return [];
+    const score = await this.getBest();
+    if (score === 0) return [];
+    return [{ name: this.readOwner()?.name ?? '이 기기', score }];
+  }
+
+  private readOwner(): OwnerRecord | null {
+    try {
+      const parsed: unknown = JSON.parse(localStorage.getItem(this.ownerKey) ?? 'null');
+      if (typeof parsed !== 'object' || parsed === null) return null;
+      const { id, name } = parsed as Record<string, unknown>;
+      return typeof id === 'string' && typeof name === 'string' ? { id, name } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeOwner(player: Player): void {
+    try {
+      localStorage.setItem(this.ownerKey, JSON.stringify({ id: player.id, name: player.name }));
+    } catch {
+      // Storage unavailable — the score itself did not persist either.
+    }
   }
 }

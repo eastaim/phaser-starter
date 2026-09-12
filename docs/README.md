@@ -9,6 +9,8 @@
   - [adr-001-템플릿-구성.md](02-architecture/adr-001-템플릿-구성.md) — 이 템플릿이 이런 모양인 이유
   - [adr-002-점수-저장-키-게임별-분리.md](02-architecture/adr-002-점수-저장-키-게임별-분리.md) —
     최고 점수 키를 `<게임 id>.best`로 도출하는 이유
+  - [adr-003-익명-플레이어-신원.md](02-architecture/adr-003-익명-플레이어-신원.md) —
+    로그인 없이 쿠키로 플레이어를 구분하는 이유
 - [03-notes](03-notes/) — 작업 메모
 - [04-references](04-references/) — 참고 자료
   - [references.md](04-references/references.md)
